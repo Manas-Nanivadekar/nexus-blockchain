@@ -1,103 +1,124 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// https://substrate.dev/docs/en/knowledgebase/runtime/frame
-
-use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, traits::Get};
+use codec::{Decode, Encode};
+use frame_support::{
+	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
+	traits::Vec,
+};
 use frame_system::ensure_signed;
 
-#[cfg(test)]
-mod mock;
-
-#[cfg(test)]
-mod tests;
-
-/// Configure the pallet by specifying the parameters and types on which it depends.
 pub trait Config: frame_system::Config {
-	/// Because this pallet emits events, it depends on the runtime's definition of an event.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
-// The pallet's runtime storage items.
-// https://substrate.dev/docs/en/knowledgebase/runtime/storage
+#[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
+pub struct Quote {
+	source_lp: Vec<u64>,
+	destination_lp: Vec<u64>,
+	rate: Vec<u64>,
+	public: bool,
+	timestamp: u64,
+	source_bank_id: Vec<u64>,
+}
+
 decl_storage! {
-	// A unique name is used to ensure that the pallet's storage items are isolated.
-	// This name may be updated, but each pallet in the runtime must use a unique name.
-	// ---------------------------------vvvvvvvvvvvvvv
-	trait Store for Module<T: Config> as TemplateModule {
-		// Learn more about declaring storage items:
-		// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
-		Something get(fn something): Option<u32>;
+	trait Store for Module<T: Config> as NexusApiQuote {
+		SimpleMap get(fn simple_map): map hasher(blake2_128_concat) T::AccountId => u32;
+		// UpdateApi get(fn update_api): map hasher(blake2_128_concat)
 	}
 }
 
-// Pallets use events to inform users when important changes are made.
-// https://substrate.dev/docs/en/knowledgebase/runtime/events
 decl_event!(
-	pub enum Event<T> where AccountId = <T as frame_system::Config>::AccountId {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, AccountId),
+	pub enum Event<T>
+	where
+		AccountId = <T as frame_system::Config>::AccountId,
+	{
+		/// A user has set their entry
+		EntrySet(AccountId, u32),
+
+		/// A user has read their entry, leaving it in storage
+		EntryGot(AccountId, u32),
+
+		/// A user has read their entry, removing it from storage
+		EntryTaken(AccountId, u32),
+
+		/// A user has read their entry, incremented it, and written the new entry to storage
+		/// Parameters are (user, old_entry, new_entry)
+		EntryIncreased(AccountId, u32, u32),
 	}
 );
 
-// Errors inform users that something went wrong.
 decl_error! {
 	pub enum Error for Module<T: Config> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+		/// The requested user has not stored a value yet
+		NoValueStored,
+
+		/// The value cannot be incremented further because it has reached the maximum allowed value
+		MaxValueReached,
 	}
 }
 
-// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-// These functions materialize as "extrinsics", which are often compared to transactions.
-// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
-		// Errors must be initialized if they are used by the pallet.
+
+		// Initialize errors
 		type Error = Error<T>;
 
-		// Events must be initialized if they are used by the pallet.
+		// Initialize events
 		fn deposit_event() = default;
 
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[weight = 10_000 + T::DbWeight::get().writes(1)]
-		pub fn do_something(origin, something: u32) -> dispatch::DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://substrate.dev/docs/en/knowledgebase/runtime/origin
-			let who = ensure_signed(origin)?;
+		/// Set the value stored at a particular key
+		#[weight = 10_000]
+		fn set_single_entry(origin, entry: u32) -> DispatchResult {
+			// A user can only set their own entry
+			let user = ensure_signed(origin)?;
 
-			// Update storage.
-			Something::put(something);
+			<SimpleMap<T>>::insert(&user, entry);
 
-			// Emit an event.
-			Self::deposit_event(RawEvent::SomethingStored(something, who));
-			// Return a successful DispatchResult
+			Self::deposit_event(RawEvent::EntrySet(user, entry));
 			Ok(())
 		}
 
-		/// An example dispatchable that may throw a custom error.
-		#[weight = 10_000 + T::DbWeight::get().reads_writes(1,1)]
-		pub fn cause_error(origin) -> dispatch::DispatchResult {
-			let _who = ensure_signed(origin)?;
+		/// Read the value stored at a particular key and emit it in an event
+		#[weight = 10_000]
+		fn get_single_entry(origin, account: T::AccountId) -> DispatchResult {
+			// Any user can get any other user's entry
+			let getter = ensure_signed(origin)?;
 
-			// Read a value from storage.
-			match Something::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue)?,
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					Something::put(new);
-					Ok(())
-				},
-			}
+			ensure!(<SimpleMap<T>>::contains_key(&account), Error::<T>::NoValueStored);
+			let entry = <SimpleMap<T>>::get(account);
+			Self::deposit_event(RawEvent::EntryGot(getter, entry));
+			Ok(())
+		}
+
+		/// Read the value stored at a particular key, while removing it from the map.
+		/// Also emit the read value in an event
+		#[weight = 10_000]
+		fn take_single_entry(origin) -> DispatchResult {
+			// A user can only take (delete) their own entry
+			let user = ensure_signed(origin)?;
+
+			ensure!(<SimpleMap<T>>::contains_key(&user), Error::<T>::NoValueStored);
+			let entry = <SimpleMap<T>>::take(&user);
+			Self::deposit_event(RawEvent::EntryTaken(user, entry));
+			Ok(())
+		}
+
+		/// Increase the value associated with a particular key
+		#[weight = 10_000]
+		fn increase_single_entry(origin, add_this_val: u32) -> DispatchResult {
+			// A user can only mutate their own entry
+			let user = ensure_signed(origin)?;
+
+			ensure!(<SimpleMap<T>>::contains_key(&user), Error::<T>::NoValueStored);
+			let original_value = <SimpleMap<T>>::get(&user);
+
+			let new_value = original_value.checked_add(add_this_val).ok_or(Error::<T>::MaxValueReached)?;
+			<SimpleMap<T>>::insert(&user, new_value);
+
+			Self::deposit_event(RawEvent::EntryIncreased(user, original_value, new_value));
+
+			Ok(())
 		}
 	}
 }
