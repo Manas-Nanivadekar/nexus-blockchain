@@ -42,7 +42,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
-pub use nexus_api_sld;
+pub use nexus_api_payee;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -110,7 +110,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 1000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -261,7 +261,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 /// Configure the template pallet in pallets/template.
-impl nexus_api_sld::Config for Runtime {
+impl nexus_api_payee::Config for Runtime {
 	type Event = Event;
 }
 
@@ -281,7 +281,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the template pallet in the runtime.
-		NexusApiSLD: nexus_api_sld::{Module, Call, Storage, Event<T>},
+		NexusApiSLD: nexus_api_payee::{Module, Call, Storage, Event<T>},
 	}
 );
 
