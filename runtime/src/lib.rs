@@ -41,8 +41,11 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-/// Import the template pallet.
+/// -----Import the nexus pallets-----
+pub use nexus_api_payee;
+pub use nexus_api_quote;
 pub use nexus_api_sld;
+/// -----Import the nexus pallets-------
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -260,8 +263,16 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the template pallet in pallets/template.
+/// Configure the nexus pallets.
 impl nexus_api_sld::Config for Runtime {
+	type Event = Event;
+}
+
+impl nexus_api_quote::Config for Runtime {
+	type Event = Event;
+}
+
+impl nexus_api_payee::Config for Runtime {
 	type Event = Event;
 }
 
@@ -282,6 +293,8 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the template pallet in the runtime.
 		NexusApiSLD: nexus_api_sld::{Module, Call, Storage, Event<T>},
+		NexusApiPayee: nexus_api_payee::{Module, Call, Storage, Event<T>},
+		NexusApiQuote: nexus_api_quote::{Module, Call, Storage, Event<T>},
 	}
 );
 
