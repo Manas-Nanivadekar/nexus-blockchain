@@ -3610,13 +3610,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "node-template"
+name = "nexus-node"
 version = "3.0.0"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "jsonrpc-core",
- "node-template-runtime",
+ "nexus-runtime",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -3646,7 +3646,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "node-template-runtime"
+name = "nexus-runtime"
 version = "3.0.0"
 dependencies = [
  "frame-benchmarking",
