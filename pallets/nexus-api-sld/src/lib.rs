@@ -29,7 +29,7 @@ pub struct Sld {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as SimpleMap {
+	trait Store for Module<T: Config> as NexusApiSLD {
 		UpdateSld get(fn update_sld): map hasher(blake2_128_concat) T::AccountId => Sld;
 	}
 }
