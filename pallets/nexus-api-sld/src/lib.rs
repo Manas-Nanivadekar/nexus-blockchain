@@ -16,6 +16,7 @@ pub trait Config: frame_system::Config {
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Sld {
 	iban: bool,
+	country_id: u32,
 	local_bank_number: Vec<u64>,
 	local_bank_id: Vec<u64>,
 	alias_conversion: bool,
@@ -30,7 +31,7 @@ pub struct Sld {
 
 decl_storage! {
 	trait Store for Module<T: Config> as NexusApiSLD {
-		UpdateSld get(fn update_sld): map hasher(blake2_128_concat) T::AccountId => Sld;
+		UpdateSld get(fn update_sld): map hasher(blake2_128_concat) (T::AccountId, u32) => Sld;
 	}
 }
 
@@ -42,6 +43,7 @@ decl_event!(
 		/// IPS has input the details
 		InputSet(
 			AccountId,
+			u32,
 			bool,
 			Vec<u64>,
 			Vec<u64>,
@@ -57,6 +59,7 @@ decl_event!(
 
 		OutputSet(
 			AccountId,
+			u32,
 			bool,
 			Vec<u64>,
 			Vec<u64>,
@@ -89,6 +92,7 @@ decl_module! {
 
 		#[weight = 10_000_000]
 		fn set_info(origin, iban: bool,
+			country_id: u32,
 			local_bank_number: Vec<u64>,
 			local_bank_id: Vec<u64>,
 			alias_conversion: bool,
@@ -109,6 +113,7 @@ decl_module! {
 
 			let sld = Sld{
 				iban,
+				country_id,
 				local_bank_number,
 				local_bank_id,
 				alias_conversion,
@@ -121,19 +126,21 @@ decl_module! {
 				ips_timeout,
 			};
 
-			<UpdateSld<T>>::insert(&user, sld);
+			<UpdateSld<T>>::insert((&user, country_id), sld);
 
-			Self::deposit_event(RawEvent::InputSet( user_clone, iban, local_bank_clone, local_bank_id_clone, alias_conversion, alias_name_clone, alias_format_clone, alias_desc_clone, max_destination_value, account_validation_available, payee_type, ips_timeout));
+			Self::deposit_event(RawEvent::InputSet( user_clone, country_id,iban, local_bank_clone, local_bank_id_clone, alias_conversion, alias_name_clone, alias_format_clone, alias_desc_clone, max_destination_value, account_validation_available, payee_type, ips_timeout));
 			Ok(())
 			}
 
-			#[weight = 10_000_000]
-			fn get_info(origin, account: T::AccountId) -> DispatchResult {
+			#[weight = 10_000]
+			fn get_info(origin, country_id : u32, account: T::AccountId) -> DispatchResult {
 				let getter = ensure_signed(origin)?;
 
-				ensure!(<UpdateSld<T>>::contains_key(&account), "Invalid AccountId");
-				let sld = <UpdateSld<T>>::get(account);
-				Self::deposit_event(RawEvent::OutputSet( getter, sld.iban, sld.local_bank_number, sld.local_bank_id, sld.alias_conversion, sld.alias_name, sld.alias_format, sld.alias_desc, sld.max_destination_value, sld.account_validation_available, sld.payee_type, sld.ips_timeout));
+				let keys  = (&account, country_id);
+
+				ensure!(<UpdateSld<T>>::contains_key(keys), "Invalid AccountId");
+				let sld = <UpdateSld<T>>::get(keys);
+				Self::deposit_event(RawEvent::OutputSet( getter, sld.country_id ,sld.iban, sld.local_bank_number, sld.local_bank_id, sld.alias_conversion, sld.alias_name, sld.alias_format, sld.alias_desc, sld.max_destination_value, sld.account_validation_available, sld.payee_type, sld.ips_timeout));
 				Ok(())
 			}
 	}
