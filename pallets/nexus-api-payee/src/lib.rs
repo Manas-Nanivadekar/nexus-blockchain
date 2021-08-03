@@ -3,7 +3,6 @@
 use codec::{Decode, Encode};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-	traits::Vec,
 };
 use frame_system::ensure_signed;
 
@@ -13,9 +12,9 @@ pub trait Config: frame_system::Config {
 
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Payee {
-	destination_country_id: Vec<u64>,
-	destination_bank_identifier: Vec<u64>,
-	destination_bank_account_number: Vec<u64>,
+	destination_country_id: u64,
+	destination_bank_identifier: u64,
+	destination_bank_account_number: u64,
 }
 
 decl_storage! {
@@ -34,7 +33,7 @@ decl_event!(
 		SubProcessDone(AccountId, bool),
 
 		/// Confirmation Is Done
-		PaymentConfirm(AccountId, Vec<u64>, Vec<u64>, Vec<u64>),
+		PaymentConfirm(AccountId, u64, u64, u64),
 	}
 );
 
@@ -65,7 +64,7 @@ decl_module! {
 
 		/// Confirm the payment
 		#[weight = 10_000]
-		fn confirmation_of_payee(origin, destination_country_id: Vec<u64>, destination_bank_identifier: Vec<u64>, destination_bank_account_number: Vec<u64>) -> DispatchResult  {
+		fn confirmation_of_payee(origin, destination_country_id: u64, destination_bank_identifier: u64, destination_bank_account_number: u64) -> DispatchResult  {
 			let user = ensure_signed(origin)?;
 
 			// Check if the dest isp/bank has confirmed the payment
