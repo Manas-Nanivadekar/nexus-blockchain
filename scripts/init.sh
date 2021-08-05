@@ -2,16 +2,21 @@
 # This script meant to be run on Unix/Linux based systems
 set -e
 
-echo "*** Initializing WASM build environment"
+echo "***Init substrate env***"
 
-sudo apt update
-
+echo "***Installing needed deps***"
 sudo apt install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl
 
-curl https://sh.rustup.rs -sSf | sh
+echo "***Installing Rust***"
+curl https://sh.rustup.rs -sSf | sh -s -- -y
 
+echo "***Setting up the rust env***"
 source ~/.cargo/env
 
+echo "*** installing make"
+sudo apt-get install make
+
+echo "***Installing the needed packages***"
 rustup default stable
 rustup update nightly
 rustup update stable
