@@ -6,6 +6,8 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 
+use sp_std::prelude::*;
+
 use core::fmt::Debug;
 
 pub trait Config: frame_system::Config {
@@ -15,22 +17,22 @@ pub trait Config: frame_system::Config {
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Sld {
 	iban: bool,
-	country_id: u32,
-	local_bank_number: u64,
-	local_bank_id: u64,
+	country_id: Vec<u8>,
+	local_bank_number: Vec<u8>,
+	local_bank_id: Vec<u8>,
 	alias_conversion: bool,
-	alias_name: u64,
-	alias_format: u64,
-	alias_desc: u64,
-	max_destination_value: u64,
+	alias_name: Vec<u8>,
+	alias_format: Vec<u8>,
+	alias_desc: Vec<u8>,
+	max_destination_value: Vec<u8>,
 	account_validation_available: bool,
 	payee_type: bool,
-	ips_timeout: u64,
+	ips_timeout: Vec<u8>,
 }
 
 decl_storage! {
 	trait Store for Module<T: Config> as NexusApiSLD {
-		UpdateSld get(fn update_sld): map hasher(blake2_128_concat) (T::AccountId, u32) => Sld;
+		UpdateSld get(fn update_sld): map hasher(blake2_128_concat) (T::AccountId, Vec<u8>) => Sld;
 	}
 }
 
@@ -43,33 +45,33 @@ decl_event!(
 		InputSet(
 			AccountId,
 			bool,
-			u32,
-			u64,
-			u64,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
 			bool,
-			u64,
-			u64,
-			u64,
-			u64,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
 			bool,
 			bool,
-			u64,
+			Vec<u8>,
 		),
 
 		OutputSet(
 			AccountId,
 			bool,
-			u32,
-			u64,
-			u64,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
 			bool,
-			u64,
-			u64,
-			u64,
-			u64,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
 			bool,
 			bool,
-			u64,
+			Vec<u8>,
 		),
 	}
 );
@@ -91,17 +93,17 @@ decl_module! {
 
 		#[weight = 10_000_000]
 		fn set_info(origin, iban: bool,
-			country_id: u32,
-			local_bank_number: u64,
-			local_bank_id: u64,
+			country_id: Vec<u8>,
+			local_bank_number: Vec<u8>,
+			local_bank_id: Vec<u8>,
 			alias_conversion: bool,
-			alias_name: u64,
-			alias_format: u64,
-			alias_desc: u64,
-			max_destination_value: u64,
+			alias_name: Vec<u8>,
+			alias_format: Vec<u8>,
+			alias_desc: Vec<u8>,
+			max_destination_value: Vec<u8>,
 			account_validation_available: bool,
 			payee_type: bool,
-			ips_timeout: u64,) -> DispatchResult {
+			ips_timeout: Vec<u8>,) -> DispatchResult {
 			let user = ensure_signed(origin)?;
 			let local_bank_clone = local_bank_number.clone();
 			let local_bank_id_clone = local_bank_id.clone();
@@ -109,6 +111,10 @@ decl_module! {
 			let alias_format_clone = alias_format.clone();
 			let alias_desc_clone = alias_desc.clone();
 			let user_clone = user.clone();
+			let country_id_clone = country_id.clone();
+			let ips_timeout_clone = ips_timeout.clone();
+			let max_destination_value_clone = max_destination_value.clone();
+
 
 			let sld = Sld{
 				iban,
@@ -125,20 +131,22 @@ decl_module! {
 				ips_timeout,
 			};
 
-			<UpdateSld<T>>::insert((&user, country_id), sld);
+			<UpdateSld<T>>::insert((&user, &country_id_clone), sld);
 
-			Self::deposit_event(RawEvent::InputSet( user_clone, iban,country_id, local_bank_clone, local_bank_id_clone, alias_conversion, alias_name_clone, alias_format_clone, alias_desc_clone, max_destination_value, account_validation_available, payee_type, ips_timeout));
+			Self::deposit_event(RawEvent::InputSet( user_clone, iban,country_id_clone, local_bank_clone, local_bank_id_clone, alias_conversion, alias_name_clone, alias_format_clone, alias_desc_clone, max_destination_value_clone, account_validation_available, payee_type, ips_timeout_clone));
 			Ok(())
 			}
 
 			#[weight = 10_000]
-			fn get_info(origin, country_id : u32, account: T::AccountId) -> DispatchResult {
+			fn get_info(origin, country_id : Vec<u8>, account: T::AccountId) -> DispatchResult {
 				let getter = ensure_signed(origin)?;
 
 				let keys  = (&account, country_id);
 
+				let keys_clone = keys.clone();
+
 				ensure!(<UpdateSld<T>>::contains_key(keys), "Invalid AccountId");
-				let sld = <UpdateSld<T>>::get(keys);
+				let sld = <UpdateSld<T>>::get(keys_clone);
 				Self::deposit_event(RawEvent::OutputSet( getter,sld.iban,  sld.country_id , sld.local_bank_number, sld.local_bank_id, sld.alias_conversion, sld.alias_name, sld.alias_format, sld.alias_desc, sld.max_destination_value, sld.account_validation_available, sld.payee_type, sld.ips_timeout));
 				Ok(())
 			}
