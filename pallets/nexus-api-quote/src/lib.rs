@@ -6,23 +6,27 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 
+use sp_std::prelude::*;
+
 pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Quote {
-	source_lp: u64,
-	destination_lp: u64,
-	rate: u64,
+	source_lp: Vec<u16>,
+	destination_lp: Vec<u16>,
+	rate: Vec<u16>,
 	public: bool,
-	timestamp: u64,
-	source_bank_id: u64,
+	timestamp: Vec<u16>,
+	source_bank_id: Vec<u16>,
+	quote_uuid: Vec<u16>,
+	fxp_uuid: Vec<u16>,
 }
 
 decl_storage! {
 	trait Store for Module<T: Config> as NexusApiQuote {
-		ProvideRates get(fn update_api): map hasher(blake2_128_concat) (u32, T::AccountId) => Quote;
+		ProvideRates get(fn update_api): map hasher(blake2_128_concat) (Vec<u8>, Vec<u8>, Vec<u16> ,T::AccountId) => Quote;
 	}
 }
 
@@ -32,13 +36,13 @@ decl_event!(
 		AccountId = <T as frame_system::Config>::AccountId,
 	{
 		/// FXP has submitted the quote for the given currencies.
-		RatesProvided(u32, AccountId, u64),
+		RatesProvided(Vec<u8>, Vec<u8>, Vec<u16>, Vec<u16>),
 
 		/// Source Bank is retriving the quote for the given currencies.
-		RatesRequested(u32, AccountId, u64),
+		RatesRequested(Vec<u8>, Vec<u8>, Vec<u16>, Vec<u16>, Vec<u16>),
 
 		/// FXP has deleted the quote for the given currencies.
-		RatesDeleted(u32, AccountId),
+		RatesDeleted(Vec<u8>, Vec<u8>, AccountId, Vec<u16>),
 	}
 );
 
@@ -62,9 +66,10 @@ decl_module! {
 		fn deposit_event() = default;
 
 		#[weight= 10_000_000]
-		fn provide_rate(origin,uuid: u32 ,source_lp: u64, destination_lp: u64, rate: u64, public: bool, timestamp: u64, source_bank_id: u64) -> DispatchResult {
+		fn provide_rate(origin, source_currency:Vec<u8>, destination_currency: Vec<u8>, quote_uuid: Vec<u16> , fxp_uuid: Vec<u16>, source_lp: Vec<u16>, destination_lp: Vec<u16>, rate: Vec<u16>, public: bool, timestamp: Vec<u16>, source_bank_id: Vec<u16>) -> DispatchResult {
 				let user = ensure_signed(origin)?;
 				let rate_clone = rate.clone();
+				let quote_uuid_clone = quote_uuid.clone();
 				let quote = Quote {
 					source_lp,
 					destination_lp,
@@ -72,31 +77,44 @@ decl_module! {
 					public,
 					timestamp,
 					source_bank_id,
+					quote_uuid,
+					fxp_uuid,
 			};
 
-			<ProvideRates<T>>::insert((uuid, &user), quote);
-			Self::deposit_event(RawEvent::RatesProvided(uuid, user, rate_clone));
+			<ProvideRates<T>>::insert((&source_currency, &destination_currency,&quote_uuid_clone ,&user), quote);
+			Self::deposit_event(RawEvent::RatesProvided(source_currency, destination_currency, quote_uuid_clone, rate_clone));
 			Ok(())
 		}
 
 		#[weight= 10_000_000]
-		fn get_rate(origin, uuid:u32) -> DispatchResult {
+		fn get_rate(origin, source_currency: Vec<u8>, destination_currency: Vec<u8>, quote_uuid:Vec<u16>) -> DispatchResult {
 				let user = ensure_signed(origin)?;
-				let origin_account = (uuid, user.clone());
+
+				let (source_currency_clone, destination_currency_clone) = (source_currency.clone(), destination_currency.clone());
+
+				let origin_account = (source_currency, destination_currency, quote_uuid, user.clone());
+
 				ensure!(<ProvideRates<T>>::contains_key(&origin_account), "");
 				let quote = <ProvideRates<T>>::get(&origin_account);
 
-				Self::deposit_event(RawEvent::RatesRequested(uuid, user, quote.rate));
+				Self::deposit_event(RawEvent::RatesRequested(source_currency_clone,destination_currency_clone, quote.quote_uuid, quote.fxp_uuid, quote.rate));
 				Ok(())
 			}
 
 		#[weight= 10_000_000]
-		fn delete_rate(origin, uuid: u32) -> DispatchResult {
+		fn delete_rate(origin, source_currency: Vec<u8>, destination_currency: Vec<u8>, quote_uuid: Vec<u16>) -> DispatchResult {
 				let user = ensure_signed(origin)?;
-				let origin_account = (uuid, user.clone());
+
+				let quote_uuid_clone = quote_uuid.clone();
+
+				let (source_currency_clone, destination_currency_clone) = (source_currency.clone(), destination_currency.clone());
+
+				let origin_account = (source_currency, destination_currency, quote_uuid,user.clone());
+
+
 				ensure!(<ProvideRates<T>>::contains_key(&origin_account), "");
 				<ProvideRates<T>>::take(&origin_account);
-			Self::deposit_event(RawEvent::RatesDeleted(uuid, user));
+			Self::deposit_event(RawEvent::RatesDeleted(source_currency_clone, destination_currency_clone, user, quote_uuid_clone));
 			Ok(())
 	}
 }
