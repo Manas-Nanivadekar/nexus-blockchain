@@ -1,10 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system::ensure_signed;
+
+use sp_std::prelude::*;
 
 pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
@@ -12,15 +12,21 @@ pub trait Config: frame_system::Config {
 
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Payee {
-	destination_country_id: u64,
-	destination_bank_identifier: u64,
-	destination_bank_account_number: u64,
+	destination_country_id: Vec<u16>,
+	destination_bank_identifier: Vec<u16>,
+	destination_bank_account_number: Vec<u16>,
+}
+
+#[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
+pub struct DestinationPayee {
+	destination_bank_acc_holder_name: Vec<u16>,
+	destination_bank_acc_display_name: Vec<u16>,
 }
 
 decl_storage! {
 	trait Store for Module<T: Config> as NexusApiPayee {
 		ConfirmPayee get(fn confirm_payee): map hasher(blake2_128_concat) T::AccountId => Payee;
-		SubProcess get(fn sub_process): map hasher(blake2_128_concat) T::AccountId => bool;
+		SubProcess get(fn sub_process): map hasher(blake2_128_concat) T::AccountId => DestinationPayee;
 	}
 }
 
@@ -30,10 +36,10 @@ decl_event!(
 		AccountId = <T as frame_system::Config>::AccountId,
 	{
 		/// SubProcess is done on behalf of the bank
-		SubProcessDone(AccountId, bool),
+		SubProcessDone(AccountId, Vec<u16>, Vec<u16>),
 
 		/// Confirmation Is Done
-		PaymentConfirm(AccountId, u64, u64, u64),
+		PaymentConfirm(AccountId, Vec<u16>, Vec<u16>),
 	}
 );
 
@@ -53,29 +59,31 @@ decl_module! {
 		// Initialize events
 		fn deposit_event() = default;
 
-		/// Confirm the subprocess on behalf of the bank
+		/// The request will be sent by the frontend
 		#[weight = 10_000]
-		fn confirm_subprocess(origin, confirm: bool) -> DispatchResult {
+		fn confirm_subprocess(origin, 	destination_bank_acc_holder_name: Vec<u16>,
+			destination_bank_acc_display_name: Vec<u16>,) -> DispatchResult {
 			let user = ensure_signed(origin)?;
-			<SubProcess<T>>::insert(&user, confirm);
-			Self::deposit_event(RawEvent::SubProcessDone(user, confirm));
+
+			let destination_payee = DestinationPayee {
+				destination_bank_acc_holder_name,
+				destination_bank_acc_display_name,
+			};
+
+			let destination_payee_clone = destination_payee.clone();
+
+			<SubProcess<T>>::insert(&user, &destination_payee);
+			Self::deposit_event(RawEvent::SubProcessDone(user, destination_payee_clone.destination_bank_acc_holder_name, destination_payee_clone.destination_bank_acc_display_name));
 			Ok(())
 		}
 
 		/// Confirm the payment
 		#[weight = 10_000]
-		fn confirmation_of_payee(origin, destination_country_id: u64, destination_bank_identifier: u64, destination_bank_account_number: u64) -> DispatchResult  {
+		fn confirmation_of_payee(origin, destination_country_id: Vec<u16>, destination_bank_identifier: Vec<u16>, destination_bank_account_number: Vec<u16>) -> DispatchResult  {
 			let user = ensure_signed(origin)?;
 
 			// Check if the dest isp/bank has confirmed the payment
 			let confirmation = <SubProcess<T>>::get(&user);
-
-			ensure!(confirmation == true, "subprocess is not done yet");
-
-			let destination_country_id_clone = destination_country_id.clone();
-			let destination_bank_identifier_clone = destination_bank_identifier.clone();
-			let destination_bank_account_number_clone = destination_bank_account_number.clone();
-
 
 			let payee = Payee {
 				destination_country_id,
@@ -83,7 +91,7 @@ decl_module! {
 				destination_bank_account_number,
 			};
 			<ConfirmPayee<T>>::insert(&user, payee);
-			Self::deposit_event(RawEvent::PaymentConfirm(user, destination_country_id_clone, destination_bank_identifier_clone, destination_bank_account_number_clone));
+			Self::deposit_event(RawEvent::PaymentConfirm(user, confirmation.destination_bank_acc_holder_name, confirmation.destination_bank_acc_display_name));
 			Ok(())
 		}
 	}
