@@ -25,6 +25,7 @@ hex-literal = {optional = true, version = '0.3.1'}
 serde = {features = ['derive'], optional = true, version = '1.0.119'}
 
 # local dependencies
+nexus-api-final = {path = '../pallets/nexus-api-final', default-features = false, version = '3.0.0'}
 nexus-api-payee = {path = '../pallets/nexus-api-payee', default-features = false, version = '3.0.0'}
 nexus-api-quote = {path = '../pallets/nexus-api-quote', default-features = false, version = '3.0.0'}
 nexus-api-sld = {path = '../pallets/nexus-api-sld', default-features = false, version = '3.0.0'}
@@ -83,6 +84,7 @@ std = [
   'nexus-api-sld/std',
   'nexus-api-payee/std',
   'nexus-api-quote/std',
+  'nexus-api-final/std',
   'pallet-timestamp/std',
   'pallet-transaction-payment/std',
   'pallet-transaction-payment-rpc-runtime-api/std',

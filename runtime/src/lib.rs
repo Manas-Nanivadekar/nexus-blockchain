@@ -42,6 +42,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 /// -----Import the nexus pallets-----
+pub use nexus_api_final;
 pub use nexus_api_payee;
 pub use nexus_api_quote;
 pub use nexus_api_sld;
@@ -276,6 +277,10 @@ impl nexus_api_payee::Config for Runtime {
 	type Event = Event;
 }
 
+impl nexus_api_final::Config for Runtime {
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -295,6 +300,7 @@ construct_runtime!(
 		NexusApiSLD: nexus_api_sld::{Module, Call, Storage, Event<T>},
 		NexusApiPayee: nexus_api_payee::{Module, Call, Storage, Event<T>},
 		NexusApiQuote: nexus_api_quote::{Module, Call, Storage, Event<T>},
+		NexusApiFinal: nexus_api_final::{Module, Call, Storage, Event<T>},
 	}
 );
 

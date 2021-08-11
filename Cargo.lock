@@ -3571,6 +3571,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "nexus-api-final"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "nexus-api-payee"
 version = "3.0.0"
 dependencies = [
@@ -3659,6 +3673,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "nexus-api-final",
  "nexus-api-payee",
  "nexus-api-quote",
  "nexus-api-sld",
