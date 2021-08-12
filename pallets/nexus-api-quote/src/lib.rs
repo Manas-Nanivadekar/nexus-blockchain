@@ -14,19 +14,19 @@ pub trait Config: frame_system::Config {
 
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Quote {
-	source_lp: Vec<u16>,
-	destination_lp: Vec<u16>,
-	rate: Vec<u16>,
+	source_lp: Vec<u8>,
+	destination_lp: Vec<u8>,
+	rate: Vec<u8>,
 	public: bool,
-	timestamp: Vec<u16>,
-	source_bank_id: Vec<u16>,
-	quote_uuid: Vec<u16>,
-	fxp_uuid: Vec<u16>,
+	timestamp: Vec<u8>,
+	source_bank_id: Vec<u8>,
+	quote_uuid: Vec<u8>,
+	fxp_uuid: Vec<u8>,
 }
 
 decl_storage! {
 	trait Store for Module<T: Config> as NexusApiQuote {
-		ProvideRates get(fn update_api): map hasher(blake2_128_concat) (Vec<u8>, Vec<u8>, Vec<u16> ,T::AccountId) => Quote;
+		ProvideRates get(fn update_api): map hasher(blake2_128_concat) (Vec<u8>, Vec<u8>, Vec<u8> ,T::AccountId) => Quote;
 	}
 }
 
@@ -36,13 +36,13 @@ decl_event!(
 		AccountId = <T as frame_system::Config>::AccountId,
 	{
 		/// FXP has submitted the quote for the given currencies.
-		RatesProvided(Vec<u8>, Vec<u8>, Vec<u16>, Vec<u16>),
+		RatesProvided(Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>),
 
 		/// Source Bank is retriving the quote for the given currencies.
-		RatesRequested(Vec<u8>, Vec<u8>, Vec<u16>, Vec<u16>, Vec<u16>),
+		RatesRequested(Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>),
 
 		/// FXP has deleted the quote for the given currencies.
-		RatesDeleted(Vec<u8>, Vec<u8>, AccountId, Vec<u16>),
+		RatesDeleted(Vec<u8>, Vec<u8>, AccountId, Vec<u8>),
 	}
 );
 
@@ -66,7 +66,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		#[weight= 10_000_000]
-		fn provide_rate(origin, source_currency:Vec<u8>, destination_currency: Vec<u8>, quote_uuid: Vec<u16> , fxp_uuid: Vec<u16>, source_lp: Vec<u16>, destination_lp: Vec<u16>, rate: Vec<u16>, public: bool, timestamp: Vec<u16>, source_bank_id: Vec<u16>) -> DispatchResult {
+		fn provide_rate(origin, source_currency:Vec<u8>, destination_currency: Vec<u8>, quote_uuid: Vec<u8> , fxp_uuid: Vec<u8>, source_lp: Vec<u8>, destination_lp: Vec<u8>, rate: Vec<u8>, public: bool, timestamp: Vec<u8>, source_bank_id: Vec<u8>) -> DispatchResult {
 				let user = ensure_signed(origin)?;
 				let rate_clone = rate.clone();
 				let quote_uuid_clone = quote_uuid.clone();
@@ -87,7 +87,7 @@ decl_module! {
 		}
 
 		#[weight= 10_000_000]
-		fn get_rate(origin, source_currency: Vec<u8>, destination_currency: Vec<u8>, quote_uuid:Vec<u16>) -> DispatchResult {
+		fn get_rate(origin, source_currency: Vec<u8>, destination_currency: Vec<u8>, quote_uuid:Vec<u8>) -> DispatchResult {
 				let user = ensure_signed(origin)?;
 
 				let (source_currency_clone, destination_currency_clone) = (source_currency.clone(), destination_currency.clone());
@@ -102,7 +102,7 @@ decl_module! {
 			}
 
 		#[weight= 10_000_000]
-		fn delete_rate(origin, source_currency: Vec<u8>, destination_currency: Vec<u8>, quote_uuid: Vec<u16>) -> DispatchResult {
+		fn delete_rate(origin, source_currency: Vec<u8>, destination_currency: Vec<u8>, quote_uuid: Vec<u8>) -> DispatchResult {
 				let user = ensure_signed(origin)?;
 
 				let quote_uuid_clone = quote_uuid.clone();

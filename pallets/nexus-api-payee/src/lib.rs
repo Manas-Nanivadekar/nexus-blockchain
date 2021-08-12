@@ -12,15 +12,15 @@ pub trait Config: frame_system::Config {
 
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct Payee {
-	destination_country_id: Vec<u16>,
-	destination_bank_identifier: Vec<u16>,
-	destination_bank_account_number: Vec<u16>,
+	destination_country_id: Vec<u8>,
+	destination_bank_identifier: Vec<u8>,
+	destination_bank_account_number: Vec<u8>,
 }
 
 #[derive(Encode, Decode, Default, Clone, Debug, Eq, PartialEq)]
 pub struct DestinationPayee {
-	destination_bank_acc_holder_name: Vec<u16>,
-	destination_bank_acc_display_name: Vec<u16>,
+	destination_bank_acc_holder_name: Vec<u8>,
+	destination_bank_acc_display_name: Vec<u8>,
 }
 
 decl_storage! {
@@ -36,10 +36,10 @@ decl_event!(
 		AccountId = <T as frame_system::Config>::AccountId,
 	{
 		/// SubProcess is done on behalf of the bank
-		SubProcessDone(AccountId, Vec<u16>, Vec<u16>),
+		SubProcessDone(AccountId, Vec<u8>, Vec<u8>),
 
 		/// Confirmation Is Done
-		PaymentConfirm(AccountId, Vec<u16>, Vec<u16>),
+		PaymentConfirm(AccountId, Vec<u8>, Vec<u8>),
 	}
 );
 
@@ -61,8 +61,8 @@ decl_module! {
 
 		/// The request will be sent by the frontend
 		#[weight = 10_000]
-		fn confirm_subprocess(origin, 	destination_bank_acc_holder_name: Vec<u16>,
-			destination_bank_acc_display_name: Vec<u16>,) -> DispatchResult {
+		fn confirm_subprocess(origin, 	destination_bank_acc_holder_name: Vec<u8>,
+			destination_bank_acc_display_name: Vec<u8>,) -> DispatchResult {
 			let user = ensure_signed(origin)?;
 
 			let destination_payee = DestinationPayee {
@@ -79,7 +79,7 @@ decl_module! {
 
 		/// Confirm the payment
 		#[weight = 10_000]
-		fn confirmation_of_payee(origin, destination_country_id: Vec<u16>, destination_bank_identifier: Vec<u16>, destination_bank_account_number: Vec<u16>) -> DispatchResult  {
+		fn confirmation_of_payee(origin, destination_country_id: Vec<u8>, destination_bank_identifier: Vec<u8>, destination_bank_account_number: Vec<u8>) -> DispatchResult  {
 			let user = ensure_signed(origin)?;
 
 			// Check if the dest isp/bank has confirmed the payment
