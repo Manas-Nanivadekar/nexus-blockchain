@@ -52,7 +52,7 @@ pub trait Config: frame_system::Config {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as SimpleMap {
+	trait Store for Module<T: Config> as NexusApiFinal {
 		FinalPayment get(fn final_payment): map hasher(blake2_128_concat) (T::AccountId , Vec<u8>)=> FinalPaymentStruct;
 		DestBank get(fn dest_bank): map hasher(blake2_128_concat) (T::AccountId , Vec<u8>)=> DestinationBankStruct;
 		SourceBank get(fn source_bank): map hasher(blake2_128_concat) (T::AccountId , Vec<u8>)=> SourceBankStruct;
