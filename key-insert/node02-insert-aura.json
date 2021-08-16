@@ -1,0 +1,10 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "author_insertKey",
+  "params": [
+    "aura",
+    "define rival cement deliver ostrich forest dynamic undo faith opinion again puzzle",
+    "0x06a8fac3462e879ab58df4b1e84e423719c062a6989223947836c95f81cc3e1d"
+  ]
+}

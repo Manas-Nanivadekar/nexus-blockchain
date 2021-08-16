@@ -1,0 +1,10 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "author_insertKey",
+  "params": [
+    "aura",
+    "pencil nasty dry step tribe hazard switch before transfer property fortune tube",
+    "0x947f51283fa3a97d28a488261ca17254b3e90784cc1d4f4a7b0bf5aaa9dcb92c"
+  ]
+}
