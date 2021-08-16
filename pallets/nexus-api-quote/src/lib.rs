@@ -48,11 +48,12 @@ decl_event!(
 
 decl_error! {
 	pub enum Error for Module<T: Config> {
-		/// The requested user has not stored a value yet
-		NoValueStored,
 
 		/// The value cannot be incremented further because it has reached the maximum allowed value
 		MaxValueReached,
+
+		/// There is no quote for the given currencies
+		NoQuote,
 	}
 }
 
@@ -94,7 +95,7 @@ decl_module! {
 
 				let origin_account = (source_currency, destination_currency, quote_uuid, user.clone());
 
-				ensure!(<ProvideRates<T>>::contains_key(&origin_account), "");
+				ensure!(<ProvideRates<T>>::contains_key(&origin_account), Error::<T>::NoQuote);
 				let quote = <ProvideRates<T>>::get(&origin_account);
 
 				Self::deposit_event(RawEvent::RatesRequested(source_currency_clone,destination_currency_clone, quote.quote_uuid, quote.fxp_uuid, quote.rate));
@@ -112,7 +113,7 @@ decl_module! {
 				let origin_account = (source_currency, destination_currency, quote_uuid,user.clone());
 
 
-				ensure!(<ProvideRates<T>>::contains_key(&origin_account), "");
+				ensure!(<ProvideRates<T>>::contains_key(&origin_account), Error::<T>::NoQuote);
 				<ProvideRates<T>>::take(&origin_account);
 			Self::deposit_event(RawEvent::RatesDeleted(source_currency_clone, destination_currency_clone, user, quote_uuid_clone));
 			Ok(())
