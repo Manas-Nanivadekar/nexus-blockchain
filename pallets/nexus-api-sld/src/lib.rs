@@ -138,10 +138,10 @@ decl_module! {
 			}
 
 			#[weight = 10_000]
-			fn get_info(origin, country_id : Vec<u8>, account: T::AccountId) -> DispatchResult {
+			fn get_info(origin, country_id : Vec<u8>) -> DispatchResult {
 				let getter = ensure_signed(origin)?;
 
-				let keys  = (&account, country_id);
+				let keys  = (&getter, country_id);
 
 				let keys_clone = keys.clone();
 

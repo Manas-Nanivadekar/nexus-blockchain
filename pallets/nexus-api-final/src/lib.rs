@@ -104,6 +104,32 @@ decl_event!(
 			Vec<u8>,
 			Vec<u8>,
 		),
+
+		FinalData(
+			AccountId,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+		),
 	}
 );
 
@@ -228,6 +254,21 @@ decl_module! {
 
 			Ok(())
 
+		}
+
+		#[weight = 10_000_000]
+		fn get_final_payment(origin, payment_id: Vec<u8>) -> DispatchResult {
+			let user = ensure_signed(origin)?;
+			let keys = (&user, payment_id);
+			let keys_clone = keys.clone();
+			let sec_clone = keys.clone();
+
+			let dest_data = <DestBank<T>>::get(keys_clone);
+			let source_data = <SourceBank<T>>::get(keys);
+			let final_data = <FinalPayment<T>>::get(sec_clone);
+
+			Self::deposit_event(RawEvent::FinalData(user, dest_data.dest_bank_id, dest_data.dest_bank_acc_number, dest_data.dest_bank_acc_name, dest_data.dest_bank_acc_add, dest_data.dest_bank_acc_dob, dest_data.dest_bank_acc_dop, dest_data.dest_bank_acc_national_id, source_data.source_bank_id, source_data.source_bank_acc_number, source_data.source_bank_acc_name, source_data.source_bank_acc_add, source_data.source_bank_acc_dob, source_data.source_bank_acc_dop, source_data.source_bank_acc_national_id, final_data.message_id, final_data.creation_time, final_data.settlement_amount, final_data.payment_uuid, final_data.clearing_system_ref, final_data.charge_bearer, final_data.quote_uuid, final_data.lp_source));
+			Ok(())
 		}
 	}
 }
