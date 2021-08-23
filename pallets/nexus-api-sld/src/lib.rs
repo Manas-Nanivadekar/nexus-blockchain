@@ -1,9 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system::ensure_signed;
 
 use sp_std::prelude::*;
@@ -145,7 +143,6 @@ decl_module! {
 
 				let keys_clone = keys.clone();
 
-				ensure!(<UpdateSld<T>>::contains_key(keys), "Invalid AccountId");
 				let sld = <UpdateSld<T>>::get(keys_clone);
 				Self::deposit_event(RawEvent::OutputSet( getter,sld.iban,  sld.country_id , sld.local_bank_number, sld.local_bank_id, sld.alias_conversion, sld.alias_name, sld.alias_format, sld.alias_desc, sld.max_destination_value, sld.account_validation_available, sld.payee_type, sld.ips_timeout));
 				Ok(())

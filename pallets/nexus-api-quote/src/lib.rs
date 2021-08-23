@@ -1,9 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system::ensure_signed;
 
 use sp_std::prelude::*;
@@ -95,7 +93,6 @@ decl_module! {
 
 				let origin_account = (source_currency, destination_currency, quote_uuid, user.clone());
 
-				ensure!(<ProvideRates<T>>::contains_key(&origin_account), Error::<T>::NoQuote);
 				let quote = <ProvideRates<T>>::get(&origin_account);
 
 				Self::deposit_event(RawEvent::RatesRequested(source_currency_clone,destination_currency_clone, quote.quote_uuid, quote.fxp_uuid, quote.rate));
@@ -113,7 +110,6 @@ decl_module! {
 				let origin_account = (source_currency, destination_currency, quote_uuid,user.clone());
 
 
-				ensure!(<ProvideRates<T>>::contains_key(&origin_account), Error::<T>::NoQuote);
 				<ProvideRates<T>>::take(&origin_account);
 			Self::deposit_event(RawEvent::RatesDeleted(source_currency_clone, destination_currency_clone, user, quote_uuid_clone));
 			Ok(())
