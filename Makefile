@@ -16,7 +16,7 @@ test:
 
 .PHONY: run
 run:
-	./target/release/nexus-node --dev
+	./target/release/nexus-node --ws-external --dev
 
 .PHONY: purge	
 purge: 
